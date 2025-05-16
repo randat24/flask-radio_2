@@ -1,0 +1,5 @@
+body { font-family: Arial; padding: 20px; }
+button { margin-right: 10px; padding: 6px 12px; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+input, select { width: 100%; box-sizing: border-box; }
