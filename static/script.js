@@ -1,3 +1,4 @@
+
 let originalData = [];
 
 const models = ["R7", "DP4400", "DP4400e", "DP4401e"];
@@ -110,12 +111,11 @@ function saveData() {
 
 function addRow() {
   originalData.push({
-    model: "", number: "", status: "", sn: "",
-    location: "", state: "", who: "", date: "", returned: "", notes: ""
+    model: "", number: "", status: "", sn: "", location: "",
+    state: "", who: "", date: "", returned: "", notes: ""
   });
   applyFilters();
 }
-
 
 window.onload = () => {
   fetch("/load")
