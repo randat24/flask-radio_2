@@ -1,25 +1,26 @@
+let originalData = [];
+
 const models = ["R7", "DP4400", "DP4400e", "DP4401e"];
 const statuses = ["Не учтеная", "Списаная", "Учтеная"];
 const locations = ["РЕР", "КСП", "БПЛА"];
 const states = ["На КСП", "Выдано", "На выход", "Утеряна", "Неизвестно", "Дежурная"];
-let editable = false;
 
-function createInput(value = "", type = "text", disabled = false) {
+function createInput(value = "", type = "text", col) {
   const input = document.createElement("input");
   input.type = type;
-  input.value = value;
-  input.disabled = !editable || disabled;
-  input.onchange = saveData;
+  input.value = value || "";
+  input.setAttribute("data-col", col);
+  input.oninput = saveData;
   return input;
 }
 
-function createSelect(options, value = "") {
+function createSelect(options, selected, col) {
   const select = document.createElement("select");
-  select.disabled = !editable;
+  select.setAttribute("data-col", col);
   options.forEach(opt => {
     const o = document.createElement("option");
-    o.value = o.text = opt;
-    if (opt === value) o.selected = true;
+    o.value = o.textContent = opt;
+    if (opt === selected) o.selected = true;
     select.appendChild(o);
   });
   select.onchange = (e) => {
@@ -40,40 +41,52 @@ function createSelect(options, value = "") {
   return select;
 }
 
-function addRow(row = {}) {
+function createEditableRow(row = {}) {
   const tr = document.createElement("tr");
-  const cells = [
-    createSelect(models, row.model),                          // модель
-    createInput(row.number),                                  // номер
-    createSelect(statuses, row.status),                       // статус
-    createInput(row.sn),                                      // sn
-    createSelect(locations, row.location),                    // где сейчас
-    createSelect(states, row.state),                          // статут
-    createInput(row.who),                                     // кто получил
-    createInput(row.date || "", "date"),                      // дата
-    createInput(row.returned || "", "date"),                  // сдали
-    createInput(row.notes || "")                              // примечание
-  ];
-  const fields = ["model", "number", "status", "sn", "location", "state", "who", "date", "returned", "notes"];
-  cells.forEach((el, i) => el.setAttribute("data-col", fields[i]));
-  cells.forEach(cell => {
-    const td = document.createElement("td");
-    td.appendChild(cell);
-    tr.appendChild(td);
-  });
+  tr.appendChild(createCell(createSelect(models, row.model, "model")));
+  tr.appendChild(createCell(createInput(row.number, "text", "number")));
+  tr.appendChild(createCell(createSelect(statuses, row.status, "status")));
+  tr.appendChild(createCell(createInput(row.sn, "text", "sn")));
+  tr.appendChild(createCell(createSelect(locations, row.location, "location")));
+  tr.appendChild(createCell(createSelect(states, row.state, "state")));
+  tr.appendChild(createCell(createInput(row.who, "text", "who")));
+  tr.appendChild(createCell(createInput(row.date, "date", "date")));
+  tr.appendChild(createCell(createInput(row.returned, "date", "returned")));
+  tr.appendChild(createCell(createInput(row.notes, "text", "notes")));
   document.querySelector("#radioTable tbody").appendChild(tr);
 }
 
-function toggleEdit() {
-  editable = !editable;
-  document.getElementById("editToggle").innerText = editable ? "Завершить редактирование" : "Редактировать таблицу";
-  document.querySelectorAll("input, select").forEach(el => el.disabled = !editable);
+function createCell(child) {
+  const td = document.createElement("td");
+  td.appendChild(child);
+  return td;
+}
+
+function renderTable(data) {
+  document.querySelector("#radioTable tbody").innerHTML = "";
+  data.forEach(createEditableRow);
+}
+
+function applyFilters() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const status = document.getElementById("statusFilter").value;
+  const location = document.getElementById("locationFilter").value;
+  const state = document.getElementById("stateFilter").value;
+
+  const filtered = originalData.filter(row => {
+    return (!status || row.status === status) &&
+           (!location || row.location === location) &&
+           (!state || row.state === state) &&
+           Object.values(row).some(v => (v || "").toLowerCase().includes(search));
+  });
+
+  renderTable(filtered);
 }
 
 function saveData() {
   const rows = document.querySelectorAll("#radioTable tbody tr");
-  const data = Array.from(rows).map(row => {
-    const get = (selector) => row.querySelector(`[data-col='${selector}']`).value;
+  const newData = Array.from(rows).map(row => {
+    const get = sel => row.querySelector(`[data-col='${sel}']`).value;
     return {
       model: get("model"),
       number: get("number"),
@@ -87,15 +100,24 @@ function saveData() {
       notes: get("notes")
     };
   });
+  originalData = newData;
   fetch("/save", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ data })
+    body: JSON.stringify({ data: newData })
   });
+}
+
+function addRow() {
+  originalData.push({});
+  applyFilters();
 }
 
 window.onload = () => {
   fetch("/load")
     .then(res => res.json())
-    .then(json => json.forEach(addRow));
-};
+    .then(json => {
+      originalData = json;
+      applyFilters();
+    });
+}

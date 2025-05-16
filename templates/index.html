@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Инвентаризация с фильтрами</title>
+  <title>Инвентаризация</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <h2>Поиск и фильтрация</h2>
+  <h2>Редактируемая таблица с фильтрами</h2>
   <div class="filters">
-    <input type="text" id="search" placeholder="Поиск по тексту..." oninput="applyFilters()" />
+    <input type="text" id="search" placeholder="Поиск..." oninput="applyFilters()" />
     <select id="statusFilter" onchange="applyFilters()">
       <option value="">Все Статусы</option>
       <option>Не учтеная</option>
@@ -30,6 +30,7 @@
       <option>Неизвестно</option>
       <option>Дежурная</option>
     </select>
+    <button onclick="addRow()">Добавить строку</button>
   </div>
 
   <table id="radioTable">
