@@ -109,9 +109,13 @@ function saveData() {
 }
 
 function addRow() {
-  originalData.push({});
+  originalData.push({
+    model: "", number: "", status: "", sn: "",
+    location: "", state: "", who: "", date: "", returned: "", notes: ""
+  });
   applyFilters();
 }
+
 
 window.onload = () => {
   fetch("/load")
