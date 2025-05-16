@@ -1,47 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Инвентаризация (Ultimate)</title>
+  <title>Инвентаризация раций</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <h2>Инвентаризация раций</h2>
-  <div class="controls">
-    <button onclick="toggleEdit()" id="editToggle">Редактировать таблицу</button>
-    <button onclick="addRow()">Добавить строку</button>
-    <button onclick="saveData()">Сохранить изменения</button>
-  </div>
-  <div class="filters">
-    <input type="text" id="search" placeholder="Поиск..." oninput="applyFilters()" />
-    <select id="statusFilter" onchange="applyFilters()">
-      <option value="">Все Статусы</option>
-      <option>Не учтеная</option>
-      <option>Списаная</option>
-      <option>Учтеная</option>
-    </select>
-    <select id="locationFilter" onchange="applyFilters()">
-      <option value="">Все Места</option>
-      <option>РЕР</option>
-      <option>КСП</option>
-      <option>БПЛА</option>
-    </select>
-    <select id="stateFilter" onchange="applyFilters()">
-      <option value="">Все Статуты</option>
-      <option>На КСП</option>
-      <option>Выдано</option>
-      <option>На выход</option>
-      <option>Утеряна</option>
-      <option>Неизвестно</option>
-      <option>Дежурная</option>
-    </select>
-  </div>
+  <button onclick="toggleEdit()" id="editToggle">Редактировать таблицу</button>
+  <button onclick="addRow()">Добавить строку</button>
   <table id="radioTable">
     <thead>
       <tr>
-        <th>Модель</th><th>Номер</th><th>Статус</th><th>S/N</th><th>Где</th>
-        <th>Статут</th><th>Кто</th><th>Дата</th><th>Сдали</th><th>Примечания</th>
+        <th>Модель</th><th>Номер</th><th>Статус</th><th>S/N</th><th>Где сейчас</th>
+        <th>Статут</th><th>Кто получил</th><th>Дата</th><th>Сдали</th><th>Примечания</th>
       </tr>
     </thead>
     <tbody></tbody>

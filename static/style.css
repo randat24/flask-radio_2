@@ -1,7 +1,5 @@
-
 body { font-family: Arial; padding: 20px; }
-.controls, .filters { margin-bottom: 10px; }
-.controls button, .filters input, .filters select { margin-right: 10px; padding: 6px 12px; }
+button { margin-right: 10px; padding: 6px 12px; }
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
 input, select { width: 100%; box-sizing: border-box; }
