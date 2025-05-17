@@ -1,101 +1,98 @@
-const models = ["R7", "DP4400", "DP4400e", "DP4401e"];
-const statuses = ["Не учтеная", "Списаная", "Учтеная"];
-const locations = ["РЕР", "КСП", "БПЛА"];
-const states = ["На КСП", "Выдано", "На выход", "Утеряна", "Неизвестно", "Дежурная"];
-let editable = false;
+document.getElementById("inventoryTable").addEventListener("blur", e => {
+  const td = e.target;
+  if (td.tagName === "TD" && td.dataset.field) {
+    const tr = td.closest("tr");
+    const id = tr.dataset.id;
+    const field = td.dataset.field;
+    const value = td.textContent.trim();
 
-function createInput(value = "", type = "text", disabled = false) {
-  const input = document.createElement("input");
-  input.type = type;
-  input.value = value;
-  input.disabled = !editable || disabled;
-  input.onchange = saveData;
-  return input;
-}
+    fetch("/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, field, value })
+    }).then(() => location.reload());
+  }
+}, true);
 
-function createSelect(options, value = "") {
-  const select = document.createElement("select");
-  select.disabled = !editable;
-  options.forEach(opt => {
-    const o = document.createElement("option");
-    o.value = o.text = opt;
-    if (opt === value) o.selected = true;
-    select.appendChild(o);
-  });
-  select.onchange = (e) => {
-    const row = e.target.closest("tr");
-    const state = row.querySelector("[data-col='state']").value;
-    const dateInput = row.querySelector("[data-col='date']");
-    const returnedInput = row.querySelector("[data-col='returned']");
-    const today = new Date().toISOString().split("T")[0];
-    if (state === "Выдано" || state === "На выход") {
-      dateInput.value = today;
+document.getElementById("inventoryTable").addEventListener("change", e => {
+  const select = e.target;
+  if (select.tagName === "SELECT" && select.dataset.field) {
+    const tr = select.closest("tr");
+    const id = tr.dataset.id;
+    let value = select.value;
+    const field = select.dataset.field;
+
+    if (value === "__add_new__") {
+      const newValue = prompt("Введите новое значение:");
+      if (!newValue) return;
+      value = newValue.trim();
+      const newOpt = document.createElement("option");
+      newOpt.value = value;
+      newOpt.text = value;
+      newOpt.selected = true;
+      select.add(newOpt);
     }
-    if (state === "На КСП") {
-      returnedInput.value = today;
-      dateInput.value = "";
-    }
-    saveData();
-  };
-  return select;
-}
 
-function addRow(row = {}) {
-  const tr = document.createElement("tr");
-  const cells = [
-    createSelect(models, row.model),                          // модель
-    createInput(row.number),                                  // номер
-    createSelect(statuses, row.status),                       // статус
-    createInput(row.sn),                                      // sn
-    createSelect(locations, row.location),                    // где сейчас
-    createSelect(states, row.state),                          // статут
-    createInput(row.who),                                     // кто получил
-    createInput(row.date || "", "date"),                      // дата
-    createInput(row.returned || "", "date"),                  // сдали
-    createInput(row.notes || "")                              // примечание
-  ];
-  const fields = ["model", "number", "status", "sn", "location", "state", "who", "date", "returned", "notes"];
-  cells.forEach((el, i) => el.setAttribute("data-col", fields[i]));
-  cells.forEach(cell => {
-    const td = document.createElement("td");
-    td.appendChild(cell);
-    tr.appendChild(td);
+    fetch("/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, field, value })
+    }).then(() => location.reload());
+  }
+});
+
+const addBtn = document.getElementById("addRow");
+if (addBtn) {
+  addBtn.addEventListener("click", () => {
+    localStorage.setItem("scrollToBottom", "true");
+    fetch("/add", { method: "POST" }).then(() => location.reload());
   });
-  document.querySelector("#radioTable tbody").appendChild(tr);
 }
 
-function toggleEdit() {
-  editable = !editable;
-  document.getElementById("editToggle").innerText = editable ? "Завершить редактирование" : "Редактировать таблицу";
-  document.querySelectorAll("input, select").forEach(el => el.disabled = !editable);
-}
+document.getElementById("deleteSelected").addEventListener("click", () => {
+  const ids = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+    .map(cb => cb.closest("tr").dataset.id);
 
-function saveData() {
-  const rows = document.querySelectorAll("#radioTable tbody tr");
-  const data = Array.from(rows).map(row => {
-    const get = (selector) => row.querySelector(`[data-col='${selector}']`).value;
-    return {
-      model: get("model"),
-      number: get("number"),
-      status: get("status"),
-      sn: get("sn"),
-      location: get("location"),
-      state: get("state"),
-      who: get("who"),
-      date: get("date"),
-      returned: get("returned"),
-      notes: get("notes")
-    };
-  });
-  fetch("/save", {
+  if (ids.length === 0) {
+    alert("Выберите хотя бы одну строку.");
+    return;
+  }
+
+  if (!confirm(`Удалить ${ids.length} записей? Это действие необратимо.`)) return;
+
+  fetch("/delete", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ data })
-  });
-}
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids })
+  }).then(() => location.reload());
+});
 
-window.onload = () => {
-  fetch("/load")
-    .then(res => res.json())
-    .then(json => json.forEach(addRow));
-};
+document.getElementById("selectAll").addEventListener("change", e => {
+  const checked = e.target.checked;
+  document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = checked);
+});
+
+document.getElementById("searchInput").addEventListener("input", e => {
+  const filter = e.target.value.toLowerCase();
+  document.querySelectorAll("#inventoryTable tbody tr").forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(filter) ? "" : "none";
+  });
+});
+
+// Дублируем действия для нижних кнопок
+document.getElementById("addRowBottom").addEventListener("click", () => {
+  fetch("/add", { method: "POST" }).then(() => location.reload());
+});
+
+document.getElementById("deleteSelectedBottom").addEventListener("click", () => {
+  document.getElementById("deleteSelected").click();
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem("scrollToBottom") === "true") {
+    const container = document.querySelector(".table-container") || window;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    localStorage.removeItem("scrollToBottom");
+  }
+});
